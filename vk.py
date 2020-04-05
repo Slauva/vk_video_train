@@ -4,8 +4,6 @@
 
 import vk_api
 import config
-from time import sleep
-import random
 
 def captcha_handler(captcha):
     key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
