@@ -4,9 +4,22 @@
 
 import vk_api
 import config
+from time import sleep
+import random
+
+def captcha_handler(captcha):
+    key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
+    return captcha.try_again(key)
+
+def auth_handler():
+    key = input("Enter authentication code: ")
+    # If: True - save, False - do not save.
+    remember_device = True
+
+    return key, remember_device
 
 # Authorization
-vk = vk_api.VkApi(config.USER_LOGIN, config.USER_PASS)
+vk = vk_api.VkApi(config.USER_LOGIN, config.USER_PASS, auth_handler=auth_handler, captcha_handler=captcha_handler)
 vk.auth()
 
 # Get vk api
@@ -24,5 +37,8 @@ if config.NEED_NEW_ALBUM:
     config.TO_ALBUM_ID = config.TO_ALBUM_ID['album_id']
 
 # Post videos to album
-for video_id in vk_videos_id:
+iteration = 0
+for video_id in vk_videos_id: 
     user.video.addToAlbum(album_id = config.TO_ALBUM_ID, owner_id = -config.OWNER_ID, video_id = video_id)
+    iteration+=1
+    print(iteration, end='\r')
