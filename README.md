@@ -11,3 +11,10 @@
 ---
 All configurations parts you can find in file *config.py* <br>
 Main script locat in file *vk.py*
+
+## Description:
+---
+This code get all videos from one group album or user <br>
+And post videos in your album. You have some options. <br>
+You can choose parametr of creating new Album with your title <br>
+Or you can give its id of your album.
