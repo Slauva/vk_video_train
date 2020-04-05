@@ -1,42 +1,47 @@
-# python 3.7
-# Author: Slava Koshman
-# GitHub: https://github.com/Slauva
-
 import vk_api
 import config
 
-def captcha_handler(captcha):
-    key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
-    return captcha.try_again(key)
+class Train:
 
-def auth_handler():
-    key = input("Enter authentication code: ")
-    # If: True - save, False - do not save.
-    remember_device = True
+    def __init__(self, user_login, user_pass, albums_id, owner_id):
+        vk = vk_api.VkApi(user_login, user_pass, auth_handler=self.auth_handler, captcha_handler=self.captcha_handler)
+        vk.auth()
+        self.user = vk.get_api()
+        self.run(albums_id, owner_id)
 
-    return key, remember_device
+    def captcha_handler(self, captcha):
+        key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
+        return captcha.try_again(key)
 
-# Authorization
-vk = vk_api.VkApi(config.USER_LOGIN, config.USER_PASS, auth_handler=auth_handler, captcha_handler=captcha_handler)
-vk.auth()
+    def auth_handler(self):
+        key = input("Enter authentication code: ")
+        # If: True - save, False - do not save.
+        remember_device = True
+        return key, remember_device
 
-# Get vk api
-user = vk.get_api()
+    def getVediosID(self, album_id, owner_id):
+        vk_videos = self.user.video.get(owner_id = -owner_id, album_id = album_id, count = 200)
+        vk_videos_id = []
+        for video in vk_videos['items']:
+            vk_videos_id.append(video.get('id'))
+        return vk_videos_id
 
-# Get videos id from group 
-vk_videos = user.video.get(owner_id = -config.OWNER_ID, album_id = config.ALBUM_ID)
-vk_videos_id = []
-for video in vk_videos['items']:
-    vk_videos_id.append(video.get('id'))
+    def addAlbum(self, title):
+        r = self.user.video.addAlbum(title = title)
+        return r['album_id']
 
-# Create new album for videos
-if config.NEED_NEW_ALBUM:
-    config.TO_ALBUM_ID = user.video.addAlbum(title = config.NEW_ALBUM_TITLE)
-    config.TO_ALBUM_ID = config.TO_ALBUM_ID['album_id']
+    def getAlbumTitle(self, album_id, owner_id):
+        album = self.user.video.getAlbumById(owner_id = -owner_id, album_id = album_id)
+        return album['title']
 
-# Post videos to album
-iteration = 0
-for video_id in vk_videos_id: 
-    user.video.addToAlbum(album_id = config.TO_ALBUM_ID, owner_id = -config.OWNER_ID, video_id = video_id)
-    iteration+=1
-    print(iteration, end='\r')
+    def run(self, albums_id, owner_id):
+        for album_id in albums_id:
+            videos = self.getVediosID(album_id, owner_id)
+            new_album_id = self.addAlbum(self.getAlbumTitle(album_id, owner_id))
+            for video in videos:
+                self.user.video.addToAlbum(album_id = new_album_id, owner_id = -owner_id, video_id = video)
+            print('Complete')
+
+
+if __name__ == "__main__":
+    _ = Train(config.USER_LOGIN, config.USER_PASS, config.ALBUMS_ID, config.OWNER_ID)
